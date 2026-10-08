@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <title>MBTI 性格速测</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700;900&display=swap');
+
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f1ec;
+      --paper: #fffdf8;
+      --ink: #162328;
+      --muted: #657074;
+      --line: #d9d8d2;
+      --accent: #d84a3a;
+      --accent-ink: #ffffff;
+      --accent-soft: #f8ddd7;
+      --teal: #126d69;
+      --teal-soft: #d8ece8;
+      --gold: #d4a331;
+      --shadow: 0 22px 64px rgba(31, 41, 43, .10);
+      --radius: 26px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101719;
+        --paper: #182124;
+        --ink: #f4f0e7;
+        --muted: #aab5b5;
+        --line: #334044;
+        --accent: #f06b59;
+        --accent-ink: #17191a;
+        --accent-soft: #482722;
+        --teal: #67c5bd;
+        --teal-soft: #203d3c;
+        --gold: #e2b750;
+        --shadow: 0 26px 70px rgba(0, 0, 0, .34);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 13% 12%, color-mix(in srgb, var(--gold) 12%, transparent) 0 1px, transparent 2px) 0 0 / 22px 22px,
+        var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: clamp(18px, 4vw, 48px);
+    }
+
+    .sheet {
+      width: min(100%, 820px);
+      min-height: min(760px, calc(100vh - 56px));
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sheet::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 7px;
+      background: linear-gradient(var(--accent) 0 33.33%, var(--gold) 33.33% 66.66%, var(--teal) 66.66%);
+    }
+
+    .quiz-view, .result-view { min-height: inherit; }
+    .quiz-view {
+      display: flex;
+      flex-direction: column;
+      padding: clamp(25px, 5vw, 54px) clamp(23px, 7vw, 76px) clamp(24px, 5vw, 48px);
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .dimension {
+      color: var(--teal);
+      letter-spacing: .04em;
+    }
+
+    .progress-track {
+      height: 5px;
+      background: var(--line);
+      margin-top: 17px;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width .28s ease;
+    }
+
+    .question-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(40px, 8vh, 76px) 0 32px;
+    }
+
+    .prompt-mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: Georgia, serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 650px;
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(28px, 5vw, 46px);
+      line-height: 1.3;
+      letter-spacing: -.02em;
+    }
+
+    .hint {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: clamp(30px, 6vh, 52px);
+    }
+
+    .option {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--paper) 94%, var(--bg));
+      color: var(--ink);
+      border-radius: 18px;
+      min-height: 118px;
+      padding: 22px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .option:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .option:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 3px; }
+    .option.selected { border-color: var(--accent); background: var(--accent-soft); }
+
+    .option-key {
+      width: 30px;
+      height: 30px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      font: 800 14px/1 ui-sans-serif, sans-serif;
+      color: var(--accent);
+    }
+
+    .option-text { font-size: clamp(16px, 2.4vw, 19px); line-height: 1.55; font-weight: 700; }
+
+    .controls {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .back {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 9px 0;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .back[disabled] { opacity: .25; cursor: default; }
+    .key-hint { color: var(--muted); font-size: 12px; }
+
+    .result-view {
+      display: none;
+      padding: clamp(30px, 6vw, 64px) clamp(24px, 7vw, 72px) 42px;
+    }
+
+    .result-view.active { display: block; }
+    .quiz-view.hidden { display: none; }
+
+    .result-kicker {
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .result-head {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 25px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 30px;
+    }
+
+    .type-stamp {
+      width: 142px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--paper);
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .type-stamp::after {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border: 1px solid color-mix(in srgb, var(--paper) 45%, transparent);
+      border-radius: 50%;
+    }
+    .type-code { font: 900 29px/1 Georgia, serif; letter-spacing: .05em; z-index: 1; }
+
+    .result-title {
+      margin: 0;
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(34px, 6vw, 54px);
+      line-height: 1.14;
+    }
+    .keywords { margin: 12px 0 0; color: var(--teal); font-weight: 800; letter-spacing: .04em; }
+
+    .result-body {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: clamp(28px, 6vw, 58px);
+      padding-top: 34px;
+    }
+
+    .description { margin: 0; font-size: 17px; line-height: 1.9; }
+    .takeaways { margin-top: 27px; display: grid; gap: 12px; }
+    .takeaway { padding: 16px 18px; background: var(--teal-soft); border-radius: 12px; line-height: 1.6; }
+    .takeaway strong { display: block; color: var(--teal); font-size: 13px; margin-bottom: 3px; }
+
+    .axes-title { margin: 0 0 18px; font-size: 15px; }
+    .axis { margin-bottom: 18px; }
+    .axis-labels { display: flex; justify-content: space-between; font-size: 13px; font-weight: 800; margin-bottom: 7px; }
+    .axis-track { height: 9px; border-radius: 99px; background: var(--line); position: relative; overflow: hidden; }
+    .axis-fill { position: absolute; top: 0; bottom: 0; border-radius: inherit; background: var(--gold); }
+    .axis-note { color: var(--muted); font-size: 12px; margin-top: 6px; text-align: right; }
+
+    .actions { display: flex; gap: 11px; flex-wrap: wrap; margin-top: 28px; }
+    .action {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .action.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .action:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+
+    .disclaimer { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 28px 0 0; }
+    .toast { min-height: 20px; margin-top: 8px; font-size: 13px; color: var(--teal); font-weight: 700; }
+
+    @media (max-width: 660px) {
+      .app { display: block; padding: 0; }
+      .sheet { min-height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+      .sheet::before { width: 5px; }
+      .quiz-view { padding-left: 23px; padding-right: 18px; }
+      .question-wrap { justify-content: flex-start; padding-top: clamp(58px, 10vh, 90px); }
+      .options { grid-template-columns: 1fr; gap: 11px; margin-top: 34px; }
+      .option { min-height: 86px; padding: 18px; align-items: center; }
+      .key-hint { display: none; }
+      .result-head { grid-template-columns: 1fr; align-items: start; }
+      .type-stamp { width: 112px; }
+      .type-code { font-size: 24px; }
+      .result-body { grid-template-columns: 1fr; }
+      .result-view { padding-left: 25px; padding-right: 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="sheet" aria-live="polite">
+      <div class="quiz-view" id="quizView">
+        <div class="topline">
+          <span class="dimension" id="dimensionLabel">能量偏好 · E / I</span>
+          <span id="counter">01 / 30</span>
+        </div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+
+        <div class="question-wrap">
+          <div class="prompt-mark" aria-hidden="true">?</div>
+          <h1 id="questionText"></h1>
+          <p class="hint">凭第一直觉选择，更接近你平时的状态即可。</p>
+          <div class="options" id="options"></div>
+        </div>
+
+        <div class="controls">
+          <button class="back" id="backBtn" type="button">← 上一题</button>
+          <span class="key-hint">键盘按 1 / 2 也能作答</span>
+        </div>
+      </div>
+
+      <div class="result-view" id="resultView">
+        <div class="result-kicker">你的性格偏好结果</div>
+        <div class="result-head">
+          <div class="type-stamp"><span class="type-code" id="typeCode"></span></div>
+          <div>
+            <h1 class="result-title" id="resultTitle"></h1>
+            <p class="keywords" id="keywords"></p>
+          </div>
+        </div>
+
+        <div class="result-body">
+          <div>
+            <p class="description" id="description"></p>
+            <div class="takeaways">
+              <div class="takeaway"><strong>你的优势</strong><span id="strength"></span></div>
+              <div class="takeaway"><strong>给你的建议</strong><span id="advice"></span></div>
+            </div>
+          </div>
+          <div>
+            <h2 class="axes-title">四维偏好</h2>
+            <div id="axes"></div>
+            <div class="actions">
+              <button class="action primary" id="copyBtn" type="button">复制结果</button>
+              <button class="action" id="restartBtn" type="button">重新测试</button>
+            </div>
+            <div class="toast" id="toast" role="status"></div>
+          </div>
+        </div>
+        <p class="disclaimer">本测试用于娱乐与自我探索，不构成专业心理评估或诊断。人的偏好会随情境与经历变化，结果不必成为限制。</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var questions = [
+        ["周末休息，你更想……", "和朋友聚会，出门转转", "一个人待着，安静充电"],
+        ["在陌生人的聚会上，你通常……", "主动找话题，和人聊起来", "先观察，等别人来找你"],
+        ["想到一个好主意时，你会……", "马上说出来，边聊边完善", "先在心里琢磨清楚"],
+        ["学习或工作时，你更喜欢……", "和人一起，边聊边做", "独立安静地完成"],
+        ["累了一天，你更想怎样恢复？", "约朋友吃饭聊天", "独处、放空一会儿"],
+        ["哪种关系更让你享受？", "不断认识有趣的新朋友", "和少数老朋友持续深交"],
+        ["开会或讨论时，你更常……", "主动表达，想到就说", "听完再想，被问到才说"],
+        ["你的社交圈通常……", "范围大，认识的人很多", "范围小，但关系更深"],
+        ["做判断时，你更相信……", "眼前可验证的事实", "自己的直觉与预感"],
+        ["推进一件事时，你更关注……", "当下的细节与步骤", "未来的可能与大方向"],
+        ["你更喜欢哪种做事方式？", "按部就班，有章可循", "灵活变通，边走边看"],
+        ["别人讲一个新计划，你最先想问……", "具体要怎么做？", "它最终能带来什么？"],
+        ["你更容易记住……", "具体事例、数字和细节", "整体规律、概念和趋势"],
+        ["学习新东西时，你偏爱……", "先看实例，再归纳方法", "先懂原理，再寻找例子"],
+        ["别人更可能这样评价你……", "踏实、务实、靠谱", "有想象力、点子多"],
+        ["做重要决定时，你更看重……", "逻辑是否成立", "相关人的感受"],
+        ["朋友做错事来倾诉，你会先……", "分析问题出在哪里", "先接住对方的情绪"],
+        ["你更难接受哪一种情况？", "不讲道理", "不讲人情"],
+        ["指出别人的问题时，你倾向……", "就事论事，直接说明", "照顾感受，委婉表达"],
+        ["你认为哪一个更重要？", "公平：一视同仁", "体谅：因人而异"],
+        ["团队出现分歧时，你倾向……", "依规则和效率做决定", "照顾情绪，寻找共识"],
+        ["哪种表达更容易说服你？", "有数据、有逻辑", "有故事、有共鸣"],
+        ["别人更可能这样评价你……", "理性、冷静", "温暖、体贴"],
+        ["准备出门旅行时，你会……", "提前做好路线和攻略", "先出发，走到哪算哪"],
+        ["你的桌面或房间通常……", "整齐有序，东西有固定位置", "看似随意，但自己找得到"],
+        ["面对截止日期，你通常……", "留出余量，提前完成", "临近截止时集中爆发"],
+        ["一旦计划定下来，你更喜欢……", "照计划执行，减少变化", "保留选择，随时调整"],
+        ["你的日常做事风格更像……", "列好清单，逐项完成", "跟着状态和灵感推进"],
+        ["别人约你时，你更希望……", "提前约定时间和地点", "临时起意也没关系"],
+        ["你更认同哪句话？", "未雨绸缪，心里踏实", "船到桥头自然直" ]
+      ];
+
+      var profiles = {
+        INTJ:["建筑师","战略 · 独立 · 远见","你习惯用长远眼光看问题，不喜欢随大流，更愿意按自己的逻辑把事情做到极致。外人可能觉得你有距离感，其实你只是把热情留给真正重要的事和人。","规划能力强、执行坚定。","偶尔允许计划有弹性，别把自己绷得太紧。"],
+        INTP:["逻辑学家","好奇 · 逻辑 · 求真","你像一本行走的“十万个为什么”，享受拆解复杂事物的过程，也讨厌被僵硬规则束缚。社交对你是选修课，思考才是必修课。","分析力强、学习速度快。","想法再好也要落地，别让完美主义拖住行动。"],
+        ENTJ:["指挥官","领导 · 果断 · 目标","你是天生的组织者，看到混乱就想梳理秩序。目标感极强，认准方向便会带队向前；别人眼里的强势，在你看来只是对事不对人。","决策迅速、擅长带领团队。","冲刺之前，多听一句不同意见。"],
+        ENTP:["辩论家","机智 · 创新 · 挑战","你是点子制造机，最怕的就是无聊。你喜欢观点碰撞，不只是为了赢，更享受思维打开新出口的瞬间。常规路线留给别人，你偏爱走未被探索的路。","反应快、适应力强。","把三分钟热度收束成一件真正做成的事。"],
+        INFJ:["提倡者","洞察 · 理想 · 坚定","你能捕捉别人没说出口的情绪，也有一套自己相信的价值。外表温和，内心却很坚定；一旦认定真正重要的方向，就不会轻易改变。","共情力强、有信念感。","先照顾好自己，再去照亮别人。"],
+        INFP:["调停者","真诚 · 浪漫 · 价值观","你活在一个重视意义与真诚的世界里。对热爱的事投入，对违背内心的事格外敏感。看起来随和，触到底线时却比谁都坚定。","真诚、有创造力。","别因追求完美而迟迟不敢开始。"],
+        ENFJ:["主人公","感染力 · 利他 · 号召","你很自然地关注身边人的状态，也擅长把大家带到一起。你的热情不是表演，而是发自内心地相信人能变得更好。","沟通力强、有凝聚力。","帮助别人之前，也问问自己累不累。"],
+        ENFP:["竞选者","热情 · 自由 · 可能性","你对世界充满好奇，总能看见新的可能。你的快乐和创意很有感染力，常常让身边的人也跟着被点亮。","人缘好、创意丰富。","给热爱排个优先级，少一些分心，多一些完成。"],
+        ISTJ:["物流师","靠谱 · 严谨 · 责任","你重视承诺与秩序，答应的事会努力办妥。你常是团队里的定海神针，不一定说得最多，却总能用行动让人放心。","执行力强、值得托付。","偶尔放松一下标准，世界不会因此失序。"],
+        ISFJ:["守卫者","体贴 · 细心 · 守护","你总能注意到别人忽略的细节。你不争不抢，但身边的人常常离不开你的照顾；你的好藏在日常的小事里。","细心、可靠。","你的付出值得被看见，不必总让自己吃亏。"],
+        ESTJ:["总经理","高效 · 务实 · 担当","你信奉把事情真正做成。做事有章法，推进有魄力，是大家眼中靠谱的组织者；拖延很少出现在你的计划里。","组织力强、结果导向。","效率之外，也给感性留一点位置。"],
+        ESFJ:["执政官","热心 · 周到 · 和谐","你天生会照顾氛围，也很快能发现谁的情绪不对。你希望大家相处愉快，并愿意为此多做一点。","亲和力强、善于协调。","别为了合群，委屈自己的真实想法。"],
+        ISTP:["鉴赏家","冷静 · 动手 · 随性","你是务实的解决者，话不一定多，但面对问题时动手能力很强。你享受当下的体验，也不喜欢被过多计划束缚。","应变快、动手能力强。","重要的事别总拖到最后一刻。"],
+        ISFP:["探险家","随性 · 审美 · 真我","你对美与氛围有天然感知，更愿意按照自己的节奏生活。看起来温和好相处，内在却十分重视自由与真实。","审美敏锐、不轻易内耗。","好想法别只放心里，说出来、试试看。"],
+        ESTP:["企业家","果敢 · 冒险 · 当下","你偏爱行动胜过空谈，想到就做是很自然的状态。变化与挑战反而会激发你的反应力，实战常是你最好的课堂。","执行力强、临场反应快。","行动前多看一眼风险，给冲劲加一道护栏。"],
+        ESFP:["表演者","快乐 · 表现 · 感染","你热爱生活，也擅长把现场变得有趣。你的活力很有感染力，和你在一起的人通常不缺笑声；体验当下对你非常重要。","感染力强、很会带动气氛。","享受当下之余，也为未来留一点规划。"]
+      };
+
+      var groups = [
+        {start:0,end:7,label:"能量偏好 · E / I",left:"E 外向",right:"I 内向"},
+        {start:8,end:14,label:"信息偏好 · S / N",left:"S 实感",right:"N 直觉"},
+        {start:15,end:22,label:"决策偏好 · T / F",left:"T 思考",right:"F 情感"},
+        {start:23,end:29,label:"生活偏好 · J / P",left:"J 判断",right:"P 知觉"}
+      ];
+
+      var current = 0;
+      var answers = new Array(questions.length);
+      var quizView = document.getElementById('quizView');
+      var resultView = document.getElementById('resultView');
+      var questionText = document.getElementById('questionText');
+      var options = document.getElementById('options');
+      var counter = document.getElementById('counter');
+      var dimensionLabel = document.getElementById('dimensionLabel');
+      var progressBar = document.getElementById('progressBar');
+      var backBtn = document.getElementById('backBtn');
+      var toast = document.getElementById('toast');
+
+      function groupFor(index) {
+        for (var i = 0; i < groups.length; i++) if (index >= groups[i].start && index <= groups[i].end) return groups[i];
+      }
+
+      function renderQuestion() {
+        var q = questions[current];
+        var saved = answers[current];
+        var number = String(current + 1).padStart(2, '0');
+        counter.textContent = number + ' / 30';
+        dimensionLabel.textContent = groupFor(current).label;
+        progressBar.style.width = (((current + 1) / questions.length) * 100) + '%';
+        questionText.textContent = q[0];
+        options.innerHTML = '';
+        [['A', q[1]], ['B', q[2]]].forEach(function (item) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'option' + (saved === item[0] ? ' selected' : '');
+          btn.setAttribute('aria-label', item[0] + '，' + item[1]);
+          btn.innerHTML = '<span class="option-key">' + item[0] + '</span><span class="option-text"></span>';
+          btn.querySelector('.option-text').textContent = item[1];
+          btn.addEventListener('click', function () { choose(item[0]); });
+          options.appendChild(btn);
+        });
+        backBtn.disabled = current === 0;
+      }
+
+      function choose(value) {
+        answers[current] = value;
+        if (current === questions.length - 1) {
+          showResult();
+        } else {
+          current += 1;
+          renderQuestion();
+        }
+      }
+
+      function scoreGroup(group, letters) {
+        var a = 0;
+        for (var i = group.start; i <= group.end; i++) if (answers[i] === 'A') a++;
+        var total = group.end - group.start + 1;
+        var b = total - a;
+        var winner;
+        if (a === b) winner = answers[group.start] === 'A' ? letters[0] : letters[1];
+        else winner = a > b ? letters[0] : letters[1];
+        var share = Math.round((Math.max(a, b) / total) * 100);
+        var note = a === b ? '两端均衡' : (Math.abs(a - b) <= 1 ? '轻微倾向' : (Math.abs(a - b) <= 3 ? '中等倾向' : '明显倾向'));
+        return {winner:winner,a:a,b:b,total:total,share:share,note:note};
+      }
+
+      function calculate() {
+        var s1 = scoreGroup(groups[0], ['E','I']);
+        var s2 = scoreGroup(groups[1], ['S','N']);
+        var s3 = scoreGroup(groups[2], ['T','F']);
+        var s4 = scoreGroup(groups[3], ['J','P']);
+        return {type:s1.winner+s2.winner+s3.winner+s4.winner, scores:[s1,s2,s3,s4]};
+      }
+
+      function showResult() {
+        var result = calculate();
+        var profile = profiles[result.type];
+        document.getElementById('typeCode').textContent = result.type;
+        document.getElementById('resultTitle').textContent = profile[0];
+        document.getElementById('keywords').textContent = profile[1];
+        document.getElementById('description').textContent = profile[2];
+        document.getElementById('strength').textContent = profile[3];
+        document.getElementById('advice').textContent = profile[4];
+
+        var axes = document.getElementById('axes');
+        axes.innerHTML = '';
+        result.scores.forEach(function (score, i) {
+          var group = groups[i];
+          var pctA = Math.round((score.a / score.total) * 100);
+          var axis = document.createElement('div');
+          axis.className = 'axis';
+          axis.innerHTML = '<div class="axis-labels"><span>' + group.left + ' ' + pctA + '%</span><span>' + (100-pctA) + '% ' + group.right + '</span></div>' +
+            '<div class="axis-track"><div class="axis-fill" style="left:0;width:' + pctA + '%"></div></div>' +
+            '<div class="axis-note">' + score.note + '</div>';
+          axes.appendChild(axis);
+        });
+
+        quizView.classList.add('hidden');
+        resultView.classList.add('active');
+        resultView.scrollIntoView({block:'start'});
+      }
+
+      backBtn.addEventListener('click', function () {
+        if (current > 0) { current -= 1; renderQuestion(); }
+      });
+
+      document.getElementById('restartBtn').addEventListener('click', function () {
+        answers = new Array(questions.length);
+        current = 0;
+        resultView.classList.remove('active');
+        quizView.classList.remove('hidden');
+        toast.textContent = '';
+        renderQuestion();
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+
+      document.getElementById('copyBtn').addEventListener('click', function () {
+        var result = calculate();
+        var profile = profiles[result.type];
+        var text = '我的 MBTI 性格速测结果：' + result.type + ' ' + profile[0] + '\n' + profile[1] + '\n优势：' + profile[3] + '\n建议：' + profile[4] + '\n（娱乐测试，结果仅供参考）';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { toast.textContent = '结果已复制'; }, function () { fallbackCopy(text); });
+        } else fallbackCopy(text);
+      });
+
+      function fallbackCopy(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); toast.textContent = '结果已复制'; }
+        catch (e) { toast.textContent = '复制失败，请长按结果文字复制'; }
+        document.body.removeChild(area);
+      }
+
+      document.addEventListener('keydown', function (event) {
+        if (quizView.classList.contains('hidden')) return;
+        if (event.key === '1' || event.key.toLowerCase() === 'a') choose('A');
+        if (event.key === '2' || event.key.toLowerCase() === 'b') choose('B');
+        if (event.key === 'ArrowLeft' && current > 0) { current -= 1; renderQuestion(); }
+      });
+
+      renderQuestion();
+    })();
+  </script>
+</body>
+</html>
